@@ -1,8 +1,15 @@
 import logging
 import threading
 import time, random
+import tkinter as tk
 from pathlib import Path
+from PIL import Image, ImageTk, ImageSequence
 
+
+reno_img = Path(__file__).parent / "../img/reno1.gif"
+santa_img = Path(__file__).parent / "../img/sleep_santa.gif"
+duendes_img = Path(__file__).parent / "../img/duendes.gif"
+trineo_img = Path(__file__).parent / "../img/trineo.gif"
 
 
 log = logging.getLogger('claus')
@@ -33,6 +40,8 @@ semaf_principal = threading.Semaphore(0)
 def duende_fnc():
     global duendes
     global total_duendes
+    global duendes_img
+    # play_gif(duendes_img)
     #? Semáforo para esperar cuando santa esta ayudando a otro grupo de duendes
     duendes_help_semaf.acquire()
     semaf_principal.acquire()
@@ -97,6 +106,7 @@ def santa_fnc():
     global duendes
     global total_renos
     global total_duendes_ayudados
+    global santa_img
     while True:
         santa_semaf.acquire()
         semaf_principal.acquire()
@@ -151,7 +161,30 @@ def main_fnc():
     for hilo in arr_hilos:
         hilo.join()
 
+window = tk.Tk()
+window.title("Problema Santa Claus in Py")
+window.geometry("700x500")
+def play_gif(image_path):
+    global img
+    img = Image.open(image_path)
+    lbl = tk.Label(window)
+    lbl.place(x=50,y=10)
+    for img in ImageSequence.Iterator(img):
+        img = ImageTk.PhotoImage(img)
+        lbl.config(image = img)
+        window.update()
+        time.sleep(0.08)
+    window.after(0,play_gif(image_path))
 
+def exit_fnc():
+    window.destroy()
+
+
+# tk.Button(window,text="play", command=main_fnc).place(x=500,y = 300)
+btn_play = tk.Button(window,text="Navidad Empieza", command=lambda: play_gif(duendes_img)).place(x=500,y = 300)
+btn_exit = tk.Button(window,text = "Salir", command=exit_fnc).place (x = 450,y= 300)
 if __name__ == '__main__':
     semaf_principal.release()
-    main_fnc()
+    # main_fnc()
+    
+    window.mainloop()
