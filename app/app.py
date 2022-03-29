@@ -1,22 +1,43 @@
-import logging
 import threading
 import time, random
+import customtkinter
 import tkinter as tk
-from pathlib import Path
-from PIL import Image, ImageTk, ImageSequence
+from PIL import Image, ImageTk
+
+customtkinter.set_appearance_mode("System")
+customtkinter.set_default_color_theme("blue") 
+
+window = customtkinter.CTk()
+window.title("Problema Santa Claus en Py 🎄🎅🏽🎁")
+window.geometry("1200x900")
+
+santa_img = ImageTk.PhotoImage(Image.open('img/santa.jpg').resize((400, 400)))
+trineo_img = ImageTk.PhotoImage(Image.open('img/trineo.jpg').resize((400, 400)))
+santa_duendes_img = ImageTk.PhotoImage(Image.open('img/santa_duendes.jpg').resize((400, 400)))
+
+renos_img = ImageTk.PhotoImage(Image.open('img/back_ground.jpg').resize((400, 400)))
+duendes_img = ImageTk.PhotoImage(Image.open('img/back_ground.jpg').resize((400, 400)))
 
 
-reno_img = Path(__file__).parent / "../img/reno1.gif"
-santa_img = Path(__file__).parent / "../img/sleep_santa.gif"
-duendes_img = Path(__file__).parent / "../img/duendes.gif"
-trineo_img = Path(__file__).parent / "../img/trineo.gif"
 
+duendes_canv = tk.Canvas(window, width=400, height=400, bg="black")
+duendes_canv.create_image(5,5, anchor=tk.NW, image=duendes_img) 
+duendes_canv.grid(row= 0, column= 0)
 
-log = logging.getLogger('claus')
-console = logging.StreamHandler()
-log.addHandler(console)
-log.setLevel(logging.INFO)
+renos_canv = tk.Canvas(window, width=400, height=400, bg="black")
+renos_canv.create_image(5,5, anchor=tk.NW, image=renos_img) 
+renos_canv.grid(row= 0, column= 2)
 
+# Etiquetas graficas de mensajes
+duendes_cont = tk.StringVar()
+renos_cont = tk.StringVar()
+duendes_msg = tk.StringVar()
+renos_msg = tk.StringVar()
+
+duende_lb = tk.Label(window, textvariable = duendes_cont, font= ("Arial", 16)).grid(row = 1, column = 0)
+duendes_msg_lb = tk.Label(window, textvariable = duendes_msg, font= ("Arial", 16)).grid(row = 3, column = 1)
+renos_msg_lb = tk.Label(window, textvariable = renos_msg, font= ("Arial", 16)).grid(row = 4, column = 1)
+reno_lb = tk.Label(window, textvariable = renos_cont, font= ("Arial", 16)).grid(row = 1, column = 2)
 
 #? Contadores
 renos = 0
@@ -28,6 +49,7 @@ total_duendes = 9
 total_duendes_ayudados = 3
 
 nombres_renos = ["RODOLFO", "DONDER", "CUPIDO", "COMETA","PRANCER", "DANCER", "DASHER"]
+
 
 santa_semaf = threading.Semaphore(0)
 renos_semaf = threading.Semaphore(0)
@@ -41,21 +63,24 @@ def duende_fnc():
     global duendes
     global total_duendes
     global duendes_img
-    # play_gif(duendes_img)
+    global window
     #? Semáforo para esperar cuando santa esta ayudando a otro grupo de duendes
     duendes_help_semaf.acquire()
     semaf_principal.acquire()
-
     duendes +=1
-    print('Llegó un duende')
     time.sleep(random.randint(1,4))
-    print(f'los due: {duendes}')
+
+    duendes_img = ImageTk.PhotoImage(Image.open(f'img/duende{duendes}.jpg').resize((400, 400)))
+    duendes_canv = tk.Canvas(window, width=400, height=400, bg="black")
+    duendes_canv.create_image(5,5, anchor=tk.NW, image=duendes_img) 
+    duendes_canv.grid(row= 0, column= 0)
+    duendes_cont.set(f"Hay {duendes} duende(s) trabajando")
+    
     if duendes == 3:
         santa_semaf.release()
-        print('Santa viene a ayudarnos')
+        duendes_msg.set(f"Duendes: Santa viene a ayudarnos")
     else:
-        # duendes_help_semaf.release()
-        print('Necesitamos otro duende')
+        duendes_msg.set(f"Duendes: Necesitamos otro duende")
     semaf_principal.release()
     duendes_semaf.acquire()
     obtener_ayuda()
@@ -67,24 +92,35 @@ def duende_fnc():
 
 def obtener_ayuda():
     global duendes
-    print('Santa claus ayudando...')
+    duendes_msg.set('Santa claus ayudando...')
     time.sleep(random.randint(1,3))
-    print('Grupo de duendes ayudados')
+    duendes_msg.set('Grupo de duendes ayudados')
 
 
 #+ ----------------- Renos ------------------------------------------------
 def vacaciones():
     time.sleep(random.randint(7,10))
+
 def reno_fnc():
     global renos
+    global window
+    global renos_img
+
     vacaciones()
     semaf_principal.acquire()
     renos += 1
-    print(f'el num de los renos {renos}')
-    print(f'Llegó el reno {nombres_renos[renos-1]}')
-    time.sleep(random.randint(1,4))
+    time.sleep(random.randint(2,5))
+
+    renos_cont.set(f"Hay {renos} reno(s) en el establo")
+    renos_msg.set(f'Llegó el reno {nombres_renos[renos-1]}')
+
+    renos_img = ImageTk.PhotoImage(Image.open(f'img/reno{renos}.jpg').resize((400, 400)))
+    renos_canv = tk.Canvas(window, width=400, height=400, bg="black")
+    renos_canv.create_image(5,5, anchor=tk.NW, image=renos_img) 
+    renos_canv.grid(row= 0, column= 2)
+
     if renos == 7:
-        print('Ya estamos los 7 renos, hablenle a Santa!!')
+        renos_msg.set('Renos: Ya estamos los 7 renos, hablenle a Santa!!')
         santa_semaf.release()
     else:
         print('\n')
@@ -93,11 +129,11 @@ def reno_fnc():
     enganchar_trineo()
 
 def enganchar_trineo():
-    print('Renos enganchando trineo...')
+    renos_msg.set('Renos enganchando trineo...')
     time.sleep(random.randint(1,3))
-    print('Renos listos!')
+    renos_msg.set('Renos listos!')
     time.sleep(random.randint(1,2))
-    print('¡Repartiendo juguetes...!')
+    renos_msg.set('¡Repartiendo juguetes...!')
 #+ -----------------------------------------------------------------------
 
 #! --------------------- Santa Claus -------------------------------------
@@ -107,21 +143,19 @@ def santa_fnc():
     global total_renos
     global total_duendes_ayudados
     global santa_img
+    global trineo_img
+    global santa_gui
+    
     while True:
         santa_semaf.acquire()
         semaf_principal.acquire()
-        print('santa')
-        
-        print(f'numero de duendes {duendes}')
         if renos == total_renos:
-            print('reni')
             preparar_trineo()
             renos = 0
             for _ in range(total_renos):
                 renos_semaf.release()
         else:
             if duendes == total_duendes_ayudados:
-                print('duendi')
                 ayudar_duendes()
                 duendes = 0
                 for _ in range(total_duendes_ayudados):
@@ -129,14 +163,18 @@ def santa_fnc():
         semaf_principal.release()
 
 def ayudar_duendes():
+    global santa_duendes_img
     print('Santa esta ayudando a duendes...')
-    time.sleep(random.randint(1,3))
+    santa_gui.create_image(10,10, anchor=tk.NW, image=santa_duendes_img) 
+    time.sleep(random.randint(1,2))
 
 def preparar_trineo():
+    global trineo_img
     print('Santa esta preparando el trineo...')
     time.sleep(random.randint(1,3))
     print('El trineo está listo!')
     time.sleep(1)
+    santa_gui.create_image(10,10, anchor=tk.NW, image=trineo_img) 
     print('Amonooooossss mis renooss!')
 #! -----------------------------------------------------------------------
 
@@ -161,30 +199,22 @@ def main_fnc():
     for hilo in arr_hilos:
         hilo.join()
 
-window = tk.Tk()
-window.title("Problema Santa Claus in Py")
-window.geometry("700x500")
-def play_gif(image_path):
-    global img
-    img = Image.open(image_path)
-    lbl = tk.Label(window)
-    lbl.place(x=50,y=10)
-    for img in ImageSequence.Iterator(img):
-        img = ImageTk.PhotoImage(img)
-        lbl.config(image = img)
-        window.update()
-        time.sleep(0.08)
-    window.after(0,play_gif(image_path))
-
 def exit_fnc():
     window.destroy()
 
+def iniciar():
+    main_thread = threading.Thread(target=main_fnc)
+    main_thread.start()
 
-# tk.Button(window,text="play", command=main_fnc).place(x=500,y = 300)
-btn_play = tk.Button(window,text="Navidad Empieza", command=lambda: play_gif(duendes_img)).place(x=500,y = 300)
-btn_exit = tk.Button(window,text = "Salir", command=exit_fnc).place (x = 450,y= 300)
+btn_play = customtkinter.CTkButton(master=window, text="Navidad Empieza", command=iniciar)
+btn_exit = customtkinter.CTkButton(master=window, text="Salir", compound="right", fg_color="#D35B58", hover_color="#C77C78",command=exit_fnc)
+
+santa_gui = tk.Canvas(window, width=400, height=400, bg="black")
+santa_gui.create_image(5,5, anchor=tk.NW, image=santa_img) 
+santa_gui.grid(row= 0, column= 1)
+
+btn_play.grid(row= 5, column= 0)
+btn_exit.grid(row=5, column= 2)
 if __name__ == '__main__':
     semaf_principal.release()
-    # main_fnc()
-    
     window.mainloop()
